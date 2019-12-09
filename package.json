@@ -6,11 +6,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "prestart": "npm run clean",
-    "start": "parcel src/index.html",
+    "dev": "parcel src/index.html",
     "clean": "rimraf dist",
     "prebuild": "npm run clean",
     "build": "parcel build src/index.html",
-    "start:prod": "http-server ./dist"
+    "start": "http-server ./dist"
   },
   "author": "",
   "license": "ISC",
