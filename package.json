@@ -1,0 +1,27 @@
+{
+  "name": "tierra2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prestart": "npm run clean",
+    "start": "parcel src/index.html",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean",
+    "build": "parcel build src/index.html",
+    "start:prod": "http-server ./dist"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "http-server": "^0.12.0",
+    "parcel-bundler": "^1.12.4",
+    "rimraf": "^3.0.0",
+    "three": "^0.111.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.103.2",
+    "typescript": "^3.7.3"
+  }
+}
