@@ -14,6 +14,8 @@ import {
   Raycaster
 } from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
+import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
+
 
 const UNITWIDTH = 90; // Width of a cubes in the maze
 const UNITHEIGHT = 45; // Height of the cubes in the maze
@@ -25,10 +27,14 @@ let clock: Clock;
 let camera: PerspectiveCamera;
 let controls: PointerLockControls;
 let scene: Scene;
+let airplane: Scene;
+let airplaneCorrection = new Vector3();
 let renderer: WebGLRenderer;
 let mapSize = 20 * UNITWIDTH;
 
 const collidableObjects: Mesh[] = [];
+
+var loader = new GLTFLoader();
 
 // Flags to determine which direction the player is moving
 let moveForward = false;
@@ -88,11 +94,11 @@ function init() {
   scene = new Scene();
 
   // Add some fog for effects
-  scene.fog = new FogExp2(0xcccccc, 0.0015);
+  // scene.fog = new FogExp2(0xcccccc, 0.0015);
 
   // Set render settings
   renderer = new WebGLRenderer();
-  renderer.setClearColor(scene.fog.color);
+  // renderer.setClearColor(scene.fog.color);
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -107,7 +113,7 @@ function init() {
     1,
     2000
   );
-  camera.position.y = 20; // Height the camera will be looking from
+  camera.position.y = 50; // Height the camera will be looking from
   camera.position.x = 0;
   camera.position.z = 0;
 
@@ -124,6 +130,33 @@ function init() {
 
   // Add lights to the scene
   addLights();
+  
+  loader.load(
+    '/resources/room_lp_obj.glb',
+    (gltf: GLTF) => {
+      scene.add(gltf.scene);
+    },
+    undefined,
+    (error: ErrorEvent) => {
+      console.error(error);
+    }
+  );
+  loader.load(
+    '/resources/airplane2.glb',
+    (gltf: GLTF) => {
+      airplane = gltf.scene;
+      scene.add(gltf.scene);
+      airplaneCorrection.x = 0;
+      airplaneCorrection.y = -5;
+      airplaneCorrection.z = -3;
+      console.log(airplane);
+    },
+    undefined,
+    (error: ErrorEvent) => {
+      console.error(error);
+    }
+  );
+  
 
   // Listen for if the window changes sizes
   window.addEventListener('resize', onWindowResize, false);
@@ -136,10 +169,6 @@ function listenForPlayerMovement() {
   // Listen for when a key is pressed
   // If it's a specified key, mark the direction as true since moving
   const onKeyDown = function(event: KeyboardEvent) {
-    headLeft
-headRight
-headUp
-headDown
     switch (event.keyCode) {
       case 87: // w
         moveForward = true;
@@ -347,6 +376,23 @@ function animatePlayer(delta: number) {
     controls.getObject().rotateX(playerHeading.x * delta);
     controls.getObject().rotateY(playerHeading.y * delta);
     controls.getObject().rotateZ(playerHeading.z * delta);
+    
+    if (airplane) {
+      airplane.position.set(
+        camera.position.x,
+        camera.position.y,
+        camera.position.z
+      );
+      airplane.rotation.set(
+        camera.rotation.x,
+        camera.rotation.y,
+        camera.rotation.z
+      );
+      
+      airplane.translateX(airplaneCorrection.x)
+      airplane.translateY(airplaneCorrection.y);
+      airplane.translateZ(airplaneCorrection.z);
+    }
   } else {
     // Collision or no movement key being pressed. Stop movememnt
     playerVelocity.x = 0;
