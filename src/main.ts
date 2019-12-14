@@ -1,40 +1,25 @@
 import {
   Vector3,
-  Clock,
   Scene,
-  FogExp2,
-  WebGLRenderer,
-  PerspectiveCamera,
-  DirectionalLight,
   MeshPhongMaterial,
   Mesh,
   PlaneGeometry,
-  DoubleSide,
-  Matrix4,
-  Raycaster
+  DoubleSide
 } from 'three';
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
-import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
+import { GraphicEngine } from './graphics/graphicEngine';
 
 
 const UNITWIDTH = 90; // Width of a cubes in the maze
 const UNITHEIGHT = 45; // Height of the cubes in the maze
-const PLAYERCOLLISIONDISTANCE = 20; // How many units away the player can get from the wall
 const PLAYERSPEED = 800.0; // How fast the player moves
 const PLAYERROTATIONSPEED = 50; // How fast the player rotates
 
-let clock: Clock;
-let camera: PerspectiveCamera;
-let controls: PointerLockControls;
-let scene: Scene;
 let airplane: Scene;
-let airplaneCorrection = new Vector3();
-let renderer: WebGLRenderer;
+let airplaneCorrection = new Vector3(0, -5, -3);
 let mapSize = 20 * UNITWIDTH;
+let engine: GraphicEngine;
 
 const collidableObjects: Mesh[] = [];
-
-var loader = new GLTFLoader();
 
 // Flags to determine which direction the player is moving
 let moveForward = false;
@@ -48,78 +33,32 @@ let headRight = false;
 let headUp = false;
 let headDown = false;
 
-// Flag to determine if the player lost the game
-let gameOver = false;
-
 // Velocity vectors for the player and dino
 const playerVelocity = new Vector3();
 const playerHeading = new Vector3();
 
-// HTML elements to be changed
-const blocker = document.getElementById('blocker');
-
-const container = document.getElementById('container');
-
-// Get control of the mouse
-function getPointerLock() {
-  document.onclick = function() {
-    container.requestPointerLock();
-  };
-
-  document.addEventListener('pointerlockchange', lockChange, false);
-}
-
-// Listen for when the pointer lock is activatd and deacivated
-function lockChange() {
-  if (document.pointerLockElement === container) {
-    blocker.style.display = 'none';
-  } else {
-    if (gameOver) {
-      // Doesn't work on CodePen, but will work locally and in UWP app
-      //location.reload();
-    }
-    blocker.style.display = '';
-  }
-}
-
 // Set up the game
-getPointerLock();
 init();
+
+function initGraphics() {
+  engine = new GraphicEngine();
+
+  engine.loadModel('/resources/room_lp_obj.glb')
+    .then((room: Scene) => {
+      engine.addToScene(room);
+    });
+
+  engine.loadModel('/resources/airplane2.glb')
+    .then((plane: Scene) => {
+      engine.addToScene(plane);
+      airplane = plane;
+    });
+}
 
 // Set up the game
 function init() {
-  // Set clock to keep track of frames
-  clock = new Clock();
-  // Create the scene where everything will go
-  scene = new Scene();
 
-  // Add some fog for effects
-  // scene.fog = new FogExp2(0xcccccc, 0.0015);
-
-  // Set render settings
-  renderer = new WebGLRenderer();
-  // renderer.setClearColor(scene.fog.color);
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-
-  // Render to the container
-  const container = document.getElementById('container');
-  container.appendChild(renderer.domElement);
-
-  // Set camera position and view details
-  camera = new PerspectiveCamera(
-    60,
-    window.innerWidth / window.innerHeight,
-    1,
-    2000
-  );
-  camera.position.y = 50; // Height the camera will be looking from
-  camera.position.x = 0;
-  camera.position.z = 0;
-
-  // Add the camera to the controller, then add to the scene
-  controls = new PointerLockControls(camera, document.body);
-  scene.add(controls.getObject());
+  initGraphics();
 
   listenForPlayerMovement();
 
@@ -127,39 +66,6 @@ function init() {
   createGround();
   // Add perimeter walls that surround the maze
   createPerimWalls();
-
-  // Add lights to the scene
-  addLights();
-  
-  loader.load(
-    '/resources/room_lp_obj.glb',
-    (gltf: GLTF) => {
-      scene.add(gltf.scene);
-    },
-    undefined,
-    (error: ErrorEvent) => {
-      console.error(error);
-    }
-  );
-  loader.load(
-    '/resources/airplane2.glb',
-    (gltf: GLTF) => {
-      airplane = gltf.scene;
-      scene.add(gltf.scene);
-      airplaneCorrection.x = 0;
-      airplaneCorrection.y = -5;
-      airplaneCorrection.z = -3;
-      console.log(airplane);
-    },
-    undefined,
-    (error: ErrorEvent) => {
-      console.error(error);
-    }
-  );
-  
-
-  // Listen for if the window changes sizes
-  window.addEventListener('resize', onWindowResize, false);
 
   animate();
 }
@@ -263,17 +169,6 @@ function listenForPlayerMovement() {
   document.addEventListener('keyup', onKeyUp, false);
 }
 
-// Add lights to the scene
-function addLights() {
-  const lightOne = new DirectionalLight(0xffffff);
-  lightOne.position.set(1, 1, 1);
-  scene.add(lightOne);
-
-  const lightTwo = new DirectionalLight(0xffffff, 0.4);
-  lightTwo.position.set(1, -1, -1);
-  scene.add(lightTwo);
-}
-
 // Create the ground plane that the maze sits on top of
 function createGround() {
   // Create the ground geometry and material
@@ -286,8 +181,9 @@ function createGround() {
   // Create the ground and rotate it flat
   const ground = new Mesh(groundGeo, groundMat);
   ground.position.set(0, 1, 0);
-  ground.rotation.x = degreesToRadians(90);
-  scene.add(ground);
+  ground.rotation.x = Math.PI / 2;
+  engine.addToScene(ground);
+  // scene.add(ground);
 }
 
 // Make the four perimeter walls for the maze
@@ -309,24 +205,18 @@ function createPerimWalls() {
 
     // Create left/right walls
     perimWallLR.position.set(halfMap * sign, UNITHEIGHT / 2, 0);
-    perimWallLR.rotation.y = degreesToRadians(90);
-    scene.add(perimWallLR);
+    perimWallLR.rotation.y = Math.PI / 2;
+    engine.addToScene(perimWallLR);
+    // scene.add(perimWallLR);
     collidableObjects.push(perimWallLR);
     // Create front/back walls
     perimWallFB.position.set(0, UNITHEIGHT / 2, halfMap * sign);
-    scene.add(perimWallFB);
+    engine.addToScene(perimWallFB);
+    // scene.add(perimWallFB);
     collidableObjects.push(perimWallFB);
 
     sign = -1; // Swap to negative value
   }
-}
-
-// Update the camera and renderer when the window changes size
-function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-
-  renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function animate() {
@@ -334,7 +224,7 @@ function animate() {
   requestAnimationFrame(animate);
 
   // Get the change in time between frames
-  const delta = clock.getDelta();
+  const delta = engine.getClockDelta();
   // Update our frames per second monitor
 
   animatePlayer(delta);
@@ -342,7 +232,8 @@ function animate() {
 
 // Render the scene
 function render() {
-  renderer.render(scene, camera);
+  engine.render();
+  // renderer.render(scene, camera);
 }
 
 // Animate the player camera
@@ -356,104 +247,28 @@ function animatePlayer(delta: number) {
   playerHeading.y = 0;
   playerHeading.z = 0;
 
+  if (moveForward) playerVelocity.z -= PLAYERSPEED * delta;
+  if (moveBackward) playerVelocity.z += PLAYERSPEED * delta;
+  if (moveLeft) playerHeading.y += PLAYERROTATIONSPEED * delta;
+  if (moveRight) playerHeading.y -= PLAYERROTATIONSPEED * delta;
+  if (moveUp) playerVelocity.y += PLAYERSPEED * delta;
+  if (moveDown) playerVelocity.y -= PLAYERSPEED * delta;
+  if (headUp) playerHeading.x -= PLAYERROTATIONSPEED * delta;
+  if (headDown) playerHeading.x += PLAYERROTATIONSPEED * delta;
+  if (headLeft) playerHeading.z += PLAYERROTATIONSPEED * delta;
+  if (headRight) playerHeading.z -= PLAYERROTATIONSPEED * delta;
 
-  // If no collision and a movement key is being pressed, apply movement velocity
-  if (detectPlayerCollision() == false) {
-    if (moveForward) playerVelocity.z -= PLAYERSPEED * delta;
-    if (moveBackward) playerVelocity.z += PLAYERSPEED * delta;
-    if (moveLeft) playerHeading.y += PLAYERROTATIONSPEED * delta;
-    if (moveRight) playerHeading.y -= PLAYERROTATIONSPEED * delta;
-    if (moveUp) playerVelocity.y += PLAYERSPEED * delta;
-    if (moveDown) playerVelocity.y -= PLAYERSPEED * delta;
-    if (headUp) playerHeading.x -= PLAYERROTATIONSPEED * delta;
-    if (headDown) playerHeading.x += PLAYERROTATIONSPEED * delta;
-    if (headLeft) playerHeading.z += PLAYERROTATIONSPEED * delta;
-    if (headRight) playerHeading.z -= PLAYERROTATIONSPEED * delta;
-
-    controls.getObject().translateX(playerVelocity.x * delta);
-    controls.getObject().translateZ(playerVelocity.z * delta);
-    controls.getObject().translateY(playerVelocity.y * delta);
-    controls.getObject().rotateX(playerHeading.x * delta);
-    controls.getObject().rotateY(playerHeading.y * delta);
-    controls.getObject().rotateZ(playerHeading.z * delta);
-    
-    if (airplane) {
-      airplane.position.set(
-        camera.position.x,
-        camera.position.y,
-        camera.position.z
-      );
-      airplane.rotation.set(
-        camera.rotation.x,
-        camera.rotation.y,
-        camera.rotation.z
-      );
-      
-      airplane.translateX(airplaneCorrection.x)
-      airplane.translateY(airplaneCorrection.y);
-      airplane.translateZ(airplaneCorrection.z);
-    }
-  } else {
-    // Collision or no movement key being pressed. Stop movememnt
-    playerVelocity.x = 0;
-    playerVelocity.z = 0;
-    playerVelocity.y = 0;
+  engine.moveControls(new Vector3(
+    playerVelocity.x * delta,
+    playerVelocity.y * delta,
+    playerVelocity.z * delta
+  ), new Vector3(
+    playerHeading.x * delta,
+    playerHeading.y * delta,
+    playerHeading.z * delta
+  ))
+  
+  if (airplane) {
+    engine.updateObject(airplane, engine.getCameraPosition(), engine.getCameraRotation(), airplaneCorrection)
   }
-}
-
-//  Determine if the player is colliding with a collidable object
-function detectPlayerCollision() {
-  // The rotation matrix to apply to our direction vector
-  // Undefined by default to indicate ray should coming from front
-  let rotationMatrix;
-  // Get direction of camera
-  const cameraDirection = controls.getDirection(new Vector3(0, 0, 0)).clone();
-
-  // Check which direction we're moving (not looking)
-  // Flip matrix to that direction so that we can reposition the ray
-  if (moveBackward) {
-    rotationMatrix = new Matrix4();
-    rotationMatrix.makeRotationY(degreesToRadians(180));
-  } else if (moveLeft) {
-    rotationMatrix = new Matrix4();
-    rotationMatrix.makeRotationY(degreesToRadians(90));
-  } else if (moveRight) {
-    rotationMatrix = new Matrix4();
-    rotationMatrix.makeRotationY(degreesToRadians(270));
-  }
-
-  // Player is moving forward, no rotation matrix needed
-  if (rotationMatrix !== undefined) {
-    cameraDirection.applyMatrix4(rotationMatrix);
-  }
-
-  // Apply ray to player camera
-  const rayCaster = new Raycaster(
-    controls.getObject().position,
-    cameraDirection
-  );
-
-  // If our ray hit a collidable object, return true
-  if (rayIntersect(rayCaster, PLAYERCOLLISIONDISTANCE)) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-// Takes a ray and sees if it's colliding with anything from the list of collidable objects
-// Returns true if certain distance away from object
-function rayIntersect(ray: Raycaster, distance: number) {
-  const intersects = ray.intersectObjects(collidableObjects);
-  for (let i = 0; i < intersects.length; i++) {
-    if (intersects[i].distance < distance) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// Converts degrees to radians
-function degreesToRadians(degrees: number) {
-  return (degrees * Math.PI) / 180;
 }
