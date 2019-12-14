@@ -1,96 +1,106 @@
 import { Vector } from './types/vector';
 // Add event listeners for player movement key presses
 export class Control {
-  acc: number;
-  vectorHead: Vector;
+  acc: number = 0;
+  vectorHead: Vector = new Vector(0, 0, 0);
 
   constructor() {
   // Add event listeners for when movement keys are pressed and released
     document.addEventListener('keydown', this.onKeyDown, false);
     document.addEventListener('keyup', this.onKeyUp, false);
   }
-  // Listen for when a key is pressed
-  // If it's a specified key, mark the direction as true since moving
+
   private onKeyDown = (event: KeyboardEvent) => {
-    switch (event.keyCode) {
-      case 87: // w
-        this.acc = 1;
-        break;
-      
-      case 65: // a
-        this.vectorHead.y = 1;
-        break;
-      
-      case 83: // s
-        this.acc = -1;
-        break;
-      
-      case 68: // d
-        this.vectorHead.y = -1;
-        break;
-
-      case 38: // up
-        this.vectorHead.x = -1;
-        break;
-
-      case 37: // left
-        this.vectorHead.z = 1;
-        break;
-
-      case 40: // down
-        this.vectorHead.x = 1;
-        break;
-
-      case 39: // right
-      this.vectorHead.z = -1;
-        break;
+    if (!event.repeat) {
+      switch (event.keyCode) {
+        case 87: // w
+          this.acc += 1;
+          break;
+        
+        case 83: // s
+          this.acc -= 1;
+          break;
+          
+        case 65: // a
+          this.vectorHead.y += 1;
+          break;
+        
+        case 68: // d
+          this.vectorHead.y -= 1;
+          break;
+  
+        case 38: // up
+          this.vectorHead.x += -1;
+          break;
+  
+        case 40: // down
+          this.vectorHead.x += 1;
+          break;
+  
+        case 37: // left
+          this.vectorHead.z += 1;
+          break;
+  
+        case 39: // right
+        this.vectorHead.z -= 1;
+          break;
+      }
+      this.acc = this.dimension(this.acc);
+      this.vectorHead.x = this.dimension(this.vectorHead.x);
+      this.vectorHead.y = this.dimension(this.vectorHead.y);
+      this.vectorHead.z = this.dimension(this.vectorHead.z);
     }
   };
+
+  private dimension(n: number, min: number = -1, max: number = 1) {
+    return Math.min(max, Math.max(min, n));
+  }
 
   // Listen for when a key is released
   // If it's a specified key, mark the direction as false since no longer moving
   private onKeyUp = (event: KeyboardEvent) => {
-    switch (event.keyCode) {
-      case 87: // w
-        moveForward = false;
-        break;
-
-      case 65: // a
-        moveLeft = false;
-        break;
-
-      case 83: // s
-        moveBackward = false;
-        break;
-
-      case 68: // d
-        moveRight = false;
-        break;
-
-      case 69: // e
-        moveUp = false;
-        break;
-
-      case 81: // q
-        moveDown = false;
-        break;
-
-      case 38: // up
-        headUp = false;
-        break;
-
-      case 37: // left
-        headLeft = false;
-        break;
-
-      case 40: // down
-        headDown = false;
-        break;
+    if (!event.repeat) {
+      switch (event.keyCode) {
+        case 87: // w
+          this.acc -= 1;
+          break;
         
-      case 39: // right
-        headRight = false;
-        break;
+        case 65: // a
+          this.vectorHead.y -= 1;
+          break;
+        
+        case 83: // s
+          this.acc -= -1;
+          break;
+        
+        case 68: // d
+          this.vectorHead.y -= -1;
+          break;
+  
+        case 38: // up
+          this.vectorHead.x -= -1;
+          break;
+  
+        case 37: // left
+          this.vectorHead.z -= 1;
+          break;
+  
+        case 40: // down
+          this.vectorHead.x -= 1;
+          break;
+  
+        case 39: // right
+        this.vectorHead.z -= -1;
+          break;
+      }
+      this.acc = this.dimension(this.acc);
+      this.vectorHead.x = this.dimension(this.vectorHead.x);
+      this.vectorHead.y = this.dimension(this.vectorHead.y);
+      this.vectorHead.z = this.dimension(this.vectorHead.z);
     }
   };
 
+  public getState() {
+    return {acc: this.acc, heading: this.vectorHead};
+  }
 }

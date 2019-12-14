@@ -7,11 +7,14 @@ import {
   DoubleSide
 } from 'three';
 import { GraphicEngine } from './graphics/graphicEngine';
+import { Control } from './control';
 
 
 const UNITWIDTH = 90; // Width of a cubes in the maze
 const UNITHEIGHT = 45; // Height of the cubes in the maze
-const PLAYERSPEED = 800.0; // How fast the player moves
+const MIN_SPEED = 0;
+const MAX_SPEED = 20;
+const PLAYERSPEED = 2.0; // How fast the player moves
 const PLAYERROTATIONSPEED = 50; // How fast the player rotates
 
 let airplane: Scene;
@@ -21,20 +24,10 @@ let engine: GraphicEngine;
 
 const collidableObjects: Mesh[] = [];
 
-// Flags to determine which direction the player is moving
-let moveForward = false;
-let moveBackward = false;
-let moveLeft = false;
-let moveRight = false;
-let moveUp = false;
-let moveDown = false;
-let headLeft = false;
-let headRight = false;
-let headUp = false;
-let headDown = false;
+let control: Control;
 
 // Velocity vectors for the player and dino
-const playerVelocity = new Vector3();
+let playerVelocity: number = 0;
 const playerHeading = new Vector3();
 
 // Set up the game
@@ -45,6 +38,7 @@ function initGraphics() {
 
   engine.loadModel('/resources/room_lp_obj.glb')
     .then((room: Scene) => {
+      room.scale.multiplyScalar(15)
       engine.addToScene(room);
     });
 
@@ -55,118 +49,26 @@ function initGraphics() {
     });
 }
 
-// Set up the game
-function init() {
-
-  initGraphics();
-
-  listenForPlayerMovement();
-
+function createObjects() {
   // Add ground plane
   createGround();
   // Add perimeter walls that surround the maze
   createPerimWalls();
-
-  animate();
 }
 
-// Add event listeners for player movement key presses
-function listenForPlayerMovement() {
-  // Listen for when a key is pressed
-  // If it's a specified key, mark the direction as true since moving
-  const onKeyDown = function(event: KeyboardEvent) {
-    switch (event.keyCode) {
-      case 87: // w
-        moveForward = true;
-        break;
-      
-      case 65: // a
-        moveLeft = true;
-        break;
-      
-      case 83: // s
-        moveBackward = true;
-        break;
-      
-      case 68: // d
-        moveRight = true;
-        break;
-      
-      case 69: // e
-        moveUp = true;
-        break;
-      
-      case 81: // q
-        moveDown = true;
-        break;
+function initInput() {
+  control = new Control();
+}
 
-      case 38: // up
-        headUp = true;
-        break;
+// Set up the game
+function init() {
+  initGraphics();
 
-      case 37: // left
-        headLeft = true;
-        break;
+  createObjects();
 
-      case 40: // down
-        headDown = true;
-        break;
+  initInput();
 
-      case 39: // right
-        headRight = true;
-        break;
-    }
-  };
-
-  // Listen for when a key is released
-  // If it's a specified key, mark the direction as false since no longer moving
-  const onKeyUp = function(event: KeyboardEvent) {
-    switch (event.keyCode) {
-      case 87: // w
-        moveForward = false;
-        break;
-
-      case 65: // a
-        moveLeft = false;
-        break;
-
-      case 83: // s
-        moveBackward = false;
-        break;
-
-      case 68: // d
-        moveRight = false;
-        break;
-
-      case 69: // e
-        moveUp = false;
-        break;
-
-      case 81: // q
-        moveDown = false;
-        break;
-
-      case 38: // up
-        headUp = false;
-        break;
-
-      case 37: // left
-        headLeft = false;
-        break;
-
-      case 40: // down
-        headDown = false;
-        break;
-        
-      case 39: // right
-        headRight = false;
-        break;
-    }
-  };
-
-  // Add event listeners for when movement keys are pressed and released
-  document.addEventListener('keydown', onKeyDown, false);
-  document.addEventListener('keyup', onKeyUp, false);
+  animate();
 }
 
 // Create the ground plane that the maze sits on top of
@@ -183,7 +85,6 @@ function createGround() {
   ground.position.set(0, 1, 0);
   ground.rotation.x = Math.PI / 2;
   engine.addToScene(ground);
-  // scene.add(ground);
 }
 
 // Make the four perimeter walls for the maze
@@ -207,12 +108,10 @@ function createPerimWalls() {
     perimWallLR.position.set(halfMap * sign, UNITHEIGHT / 2, 0);
     perimWallLR.rotation.y = Math.PI / 2;
     engine.addToScene(perimWallLR);
-    // scene.add(perimWallLR);
     collidableObjects.push(perimWallLR);
     // Create front/back walls
     perimWallFB.position.set(0, UNITHEIGHT / 2, halfMap * sign);
     engine.addToScene(perimWallFB);
-    // scene.add(perimWallFB);
     collidableObjects.push(perimWallFB);
 
     sign = -1; // Swap to negative value
@@ -233,35 +132,37 @@ function animate() {
 // Render the scene
 function render() {
   engine.render();
-  // renderer.render(scene, camera);
 }
 
 // Animate the player camera
 function animatePlayer(delta: number) {
-  // Gradual slowdown
-  playerVelocity.x -= playerVelocity.x * 10.0 * delta;
-  playerVelocity.z -= playerVelocity.z * 10.0 * delta;
-  playerVelocity.y -= playerVelocity.y * 10.0 * delta;
+  
+  const {acc, heading} = control.getState();
 
-  playerHeading.x = 0;
-  playerHeading.y = 0;
-  playerHeading.z = 0;
+  let modFactor = 0;
+  console.log(acc);
+  
+  if (acc === 0) {
+    // Gradual slowdown if not accelerating
+    modFactor = playerVelocity * -0.2;
+  } else if (acc > 0) {
+    //Breaks are weaker than throttle
+    modFactor = acc * (PLAYERSPEED * 2);
+  } else {
+    modFactor = acc * PLAYERSPEED
+  }
 
-  if (moveForward) playerVelocity.z -= PLAYERSPEED * delta;
-  if (moveBackward) playerVelocity.z += PLAYERSPEED * delta;
-  if (moveLeft) playerHeading.y += PLAYERROTATIONSPEED * delta;
-  if (moveRight) playerHeading.y -= PLAYERROTATIONSPEED * delta;
-  if (moveUp) playerVelocity.y += PLAYERSPEED * delta;
-  if (moveDown) playerVelocity.y -= PLAYERSPEED * delta;
-  if (headUp) playerHeading.x -= PLAYERROTATIONSPEED * delta;
-  if (headDown) playerHeading.x += PLAYERROTATIONSPEED * delta;
-  if (headLeft) playerHeading.z += PLAYERROTATIONSPEED * delta;
-  if (headRight) playerHeading.z -= PLAYERROTATIONSPEED * delta;
+  playerVelocity = Math.min(MAX_SPEED, Math.max(MIN_SPEED, playerVelocity + modFactor * delta))
 
+  playerHeading.x = heading.x * (PLAYERROTATIONSPEED * delta);
+  playerHeading.y = heading.y * (PLAYERROTATIONSPEED * delta);
+  playerHeading.z = heading.z * (PLAYERROTATIONSPEED * delta);
+  console.log(playerVelocity);
+  
   engine.moveControls(new Vector3(
-    playerVelocity.x * delta,
-    playerVelocity.y * delta,
-    playerVelocity.z * delta
+    0,
+    0,
+    -1 * playerVelocity
   ), new Vector3(
     playerHeading.x * delta,
     playerHeading.y * delta,

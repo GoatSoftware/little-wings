@@ -23,7 +23,7 @@ export class GraphicEngine {
       60,
       window.innerWidth / window.innerHeight,
       1,
-      2000
+      200000
     );
     this.camera.position.set(0, 50, 0);
 
