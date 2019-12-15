@@ -40,14 +40,14 @@ init();
 function initGraphics() {
   engine = new GraphicEngine();
 
-  engine.loadModel('/resources/room_lp_obj.glb')
+  GraphicEngine.loadModel('/resources/room_lp_obj.glb')
     .then((room: Scene) => {
       room.scale.multiplyScalar(15)
       engine.addToScene(room);
     });
 
   airplane = new Airplane();
-  airplane.load(engine.loadModel)
+  airplane.load()
     .then(() => {
       engine.addToScene(airplane.getGraphicModel());
     });
@@ -237,8 +237,6 @@ function animatePlayer(delta: number) {
   ))
   
   if (airplane.isLoaded()) {
-    console.log('isLoaded');
-    
     engine.updateObject(airplane.getGraphicModel(), engine.getCameraPosition(), engine.getCameraRotation(), airplaneCorrection)
   }
 }

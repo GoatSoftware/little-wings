@@ -43,8 +43,6 @@ export class GraphicEngine {
 
     this.controls = new PointerLockControls(this.camera, document.body);
 
-    this.gltfLoader = new GLTFLoader();
-
     this.addLights();
 
     this.clock = new Clock();
@@ -76,9 +74,10 @@ export class GraphicEngine {
   public async loadModels() {
   }
 
-  public loadModel(path: string): Promise<any> {
+  public static loadModel(path: string): Promise<any> {
+    const gltfLoader = new GLTFLoader();
     return new Promise((resolve, reject) => {
-      this.gltfLoader.load(
+      gltfLoader.load(
         path,
         (gltf: GLTF) => {
           resolve(gltf.scene);
