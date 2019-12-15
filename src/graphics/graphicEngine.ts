@@ -1,4 +1,10 @@
-import { Scene, PerspectiveCamera, WebGLRenderer, Color, Vector3, DirectionalLight, FogExp2, Mesh, Euler, Clock } from "three";
+declare global {
+  interface Window {
+    __THREE_DEVTOOLS__: any;
+  }
+}
+
+import { Scene, PerspectiveCamera, WebGLRenderer, Color, Vector3, DirectionalLight, FogExp2, Mesh, Euler, Clock, AmbientLight } from "three";
 import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls";
 import { GLTFLoader, GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 
@@ -56,6 +62,9 @@ export class GraphicEngine {
   private addLights() {
     this.addDirectionalLight(new Vector3(1, 1, 1), 0xffffff);
     this.addDirectionalLight(new Vector3(1, -1, -1), 0xffffff, 0.4);
+
+    const ambientLight = new AmbientLight( 0x707070 );
+    this.scene.add(ambientLight);
   }
 
   private addDirectionalLight(position: Vector3, color: number, intensity?: number) {
@@ -123,6 +132,13 @@ export class GraphicEngine {
 
   public getClockDelta() {
     return this.clock.getDelta();
+  }
+
+  public initDebugger() {
+    if (typeof window.__THREE_DEVTOOLS__ !== 'undefined') {
+      window.__THREE_DEVTOOLS__.dispatchEvent(new CustomEvent('observe', { detail: this.scene }));
+      window.__THREE_DEVTOOLS__.dispatchEvent(new CustomEvent('observe', { detail: this.renderer }));
+    }
   }
 
   public render() {

@@ -8,7 +8,8 @@ import {
 } from 'three';
 import { GraphicEngine } from './graphics/graphicEngine';
 import { Control } from './control';
-
+import { World, GSSolver, SplitSolver, NaiveBroadphase, Material, ContactMaterial, Body, Plane, Vec3, Sphere } from 'cannon';
+import { Airplane } from './objects/airplane';
 
 const UNITWIDTH = 90; // Width of a cubes in the maze
 const UNITHEIGHT = 45; // Height of the cubes in the maze
@@ -17,10 +18,13 @@ const MAX_SPEED = 20;
 const PLAYERSPEED = 2.0; // How fast the player moves
 const PLAYERROTATIONSPEED = 50; // How fast the player rotates
 
-let airplane: Scene;
+let airplane: Airplane;
 let airplaneCorrection = new Vector3(0, -5, -3);
 let mapSize = 20 * UNITWIDTH;
 let engine: GraphicEngine;
+
+let world: World;
+let sphereBody: Body;
 
 const collidableObjects: Mesh[] = [];
 
@@ -42,11 +46,67 @@ function initGraphics() {
       engine.addToScene(room);
     });
 
-  engine.loadModel('/resources/airplane2.glb')
-    .then((plane: Scene) => {
-      engine.addToScene(plane);
-      airplane = plane;
+  airplane = new Airplane();
+  airplane.load(engine.loadModel)
+    .then(() => {
+      engine.addToScene(airplane.getGraphicModel());
     });
+
+
+  // engine.loadModel('/resources/airplane2.glb')
+  //   .then((plane: Scene) => {
+  //     engine.addToScene(plane);
+  //     airplane = plane;
+  //   });
+}
+
+function initDebugger() {
+  engine.initDebugger();
+}
+
+function initPhysics() {
+    // Setup our world
+    world = new World();
+    world.quatNormalizeSkip = 0;
+    world.quatNormalizeFast = false;
+    var solver = new GSSolver();
+    world.defaultContactMaterial.contactEquationStiffness = 1e9;
+    world.defaultContactMaterial.contactEquationRelaxation = 4;
+    solver.iterations = 7;
+    solver.tolerance = 0.1;
+    var split = true;
+    if(split)
+        world.solver = new SplitSolver(solver);
+    else
+        world.solver = solver;
+    world.gravity.set(0,-20,0);
+    world.broadphase = new NaiveBroadphase();
+    // Create a slippery material (friction coefficient = 0.0)
+    const physicsMaterial = new Material("slipperyMaterial");
+    const physicsContactMaterial = new ContactMaterial(
+      physicsMaterial,
+      physicsMaterial,
+      {
+        friction: 0,
+        restitution: 0.3
+      }
+    );
+    // We must add the contact materials to the world
+    world.addContactMaterial(physicsContactMaterial);
+    // Create a sphere
+    var mass = 5, radius = 1.3;
+    const sphereShape = new Sphere(radius);
+    sphereBody = new Body({ mass: mass });
+    sphereBody.addShape(sphereShape);
+    sphereBody.position.set(0,5,0);
+    sphereBody.linearDamping = 0.9;
+    world.addBody(sphereBody);
+    // Create a plane
+    const groundShape = new Plane();
+    const groundBody = new Body({ mass: 0 });
+    groundBody.addShape(groundShape);
+    groundBody.quaternion.setFromAxisAngle(new Vec3(1,0,0),-Math.PI/2);
+    world.addBody(groundBody);
 }
 
 function createObjects() {
@@ -64,9 +124,13 @@ function initInput() {
 function init() {
   initGraphics();
 
+  initPhysics();
+
   createObjects();
 
   initInput();
+
+  initDebugger();
 
   animate();
 }
@@ -127,6 +191,8 @@ function animate() {
   // Update our frames per second monitor
 
   animatePlayer(delta);
+
+  world.step(delta);
 }
 
 // Render the scene
@@ -140,7 +206,8 @@ function animatePlayer(delta: number) {
   const {acc, heading} = control.getState();
 
   let modFactor = 0;
-  console.log(acc);
+  console.log(JSON.stringify(sphereBody.position));
+  
   
   if (acc === 0) {
     // Gradual slowdown if not accelerating
@@ -169,7 +236,9 @@ function animatePlayer(delta: number) {
     playerHeading.z * delta
   ))
   
-  if (airplane) {
-    engine.updateObject(airplane, engine.getCameraPosition(), engine.getCameraRotation(), airplaneCorrection)
+  if (airplane.isLoaded()) {
+    console.log('isLoaded');
+    
+    engine.updateObject(airplane.getGraphicModel(), engine.getCameraPosition(), engine.getCameraRotation(), airplaneCorrection)
   }
 }
