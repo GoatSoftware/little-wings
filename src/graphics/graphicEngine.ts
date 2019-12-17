@@ -28,7 +28,7 @@ export class GraphicEngine {
     this.camera = new PerspectiveCamera(
       60,
       window.innerWidth / window.innerHeight,
-      1,
+      0.01,
       200000
     );
     this.camera.position.set(0, 50, 0);
@@ -116,6 +116,14 @@ export class GraphicEngine {
     this.controls.getObject().translateX(deltaPosition.x);
     this.controls.getObject().translateZ(deltaPosition.z);
     this.controls.getObject().translateY(deltaPosition.y);
+    this.controls.getObject().rotateX(deltaRotation.x);
+    this.controls.getObject().rotateY(deltaRotation.y);
+    this.controls.getObject().rotateZ(deltaRotation.z);
+  }
+
+  public testMoveControls(pos: Vector3, deltaRotation: Vector3) {
+    this.camera.position.set(pos.x, pos.y, pos.z);
+    // this.controls.update();
     this.controls.getObject().rotateX(deltaRotation.x);
     this.controls.getObject().rotateY(deltaRotation.y);
     this.controls.getObject().rotateZ(deltaRotation.z);

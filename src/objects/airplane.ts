@@ -1,32 +1,29 @@
-import { Scene } from "three";
-import { GraphicEngine } from '../graphics/graphicEngine';
+import { BaseModel } from './baseModel';
+import { Group, Scene, Mesh, MeshBasicMaterial } from 'three';
 
-export class Airplane {
-  private modelPath = '/resources/airplane2.glb';
-  private graphicModel: Scene;
-  private physicModel: any;
-  private position: any;
+export class Airplane extends BaseModel {
+  constructor(wireframe?: boolean) {
+    super(wireframe);
+    
+    this.modelPath = '/resources/airplane2_small.glb';
 
-  load() {
+  }
+
+  public load(): Promise<any> {
     return new Promise((resolve, reject) => {
-      GraphicEngine.loadModel(this.modelPath)
-        .then((room: Scene) => {
-          console.log('loading complete');
-          this.graphicModel = room;
-          resolve();
+      super.load()
+        .then((model: Scene) => {
+          if (this.wireframe) {
+            ((model.children[0] as Mesh).material as MeshBasicMaterial).wireframe = true;
+            ((model.children[1] as Mesh).material as MeshBasicMaterial).wireframe = true;
+            ((model.children[2] as Mesh).material as MeshBasicMaterial).wireframe = true;
+            ((model.children[3].children[3] as Mesh).material as MeshBasicMaterial).wireframe = true;
+          }
+          resolve(model);
         })
-        .catch((error) => {
-          console.log('error');
-          reject(error);
+        .catch(error => {
+          reject(error)
         });
     });
-  }
-
-  getGraphicModel() {
-    return this.graphicModel;
-  }
-
-  isLoaded() {
-    return !!this.graphicModel;
   }
 }

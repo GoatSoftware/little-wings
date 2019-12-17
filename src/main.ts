@@ -14,12 +14,13 @@ import { Airplane } from './objects/airplane';
 const UNITWIDTH = 90; // Width of a cubes in the maze
 const UNITHEIGHT = 45; // Height of the cubes in the maze
 const MIN_SPEED = 0;
-const MAX_SPEED = 20;
-const PLAYERSPEED = 2.0; // How fast the player moves
+const MAX_SPEED = 100;
+const PLAYERSPEED = 10.0; // How fast the player accelerates
 const PLAYERROTATIONSPEED = 50; // How fast the player rotates
 
 let airplane: Airplane;
-let airplaneCorrection = new Vector3(0, -5, -3);
+let airplaneCorrection = new Vector3(0, -0.095, -0.04);
+// airplaneCorrection.z = airplaneCorrection.z - 1;
 let mapSize = 20 * UNITWIDTH;
 let engine: GraphicEngine;
 
@@ -32,7 +33,7 @@ let control: Control;
 
 // Velocity vectors for the player and dino
 let playerVelocity: number = 0;
-const playerHeading = new Vector3();
+const deltaPlayerHeading = new Vector3();
 
 // Set up the game
 init();
@@ -40,7 +41,7 @@ init();
 function initGraphics() {
   engine = new GraphicEngine();
 
-  GraphicEngine.loadModel('/resources/room_lp_obj.glb')
+  GraphicEngine.loadModel('/resources/room_lp_obj_small.glb')
     .then((room: Scene) => {
       room.scale.multiplyScalar(15)
       engine.addToScene(room);
@@ -79,7 +80,7 @@ function initPhysics() {
         world.solver = new SplitSolver(solver);
     else
         world.solver = solver;
-    world.gravity.set(0,-20,0);
+    world.gravity.set(0, -9.82, 0);
     world.broadphase = new NaiveBroadphase();
     // Create a slippery material (friction coefficient = 0.0)
     const physicsMaterial = new Material("slipperyMaterial");
@@ -94,13 +95,7 @@ function initPhysics() {
     // We must add the contact materials to the world
     world.addContactMaterial(physicsContactMaterial);
     // Create a sphere
-    var mass = 5, radius = 1.3;
-    const sphereShape = new Sphere(radius);
-    sphereBody = new Body({ mass: mass });
-    sphereBody.addShape(sphereShape);
-    sphereBody.position.set(0,5,0);
-    sphereBody.linearDamping = 0.9;
-    world.addBody(sphereBody);
+    world.addBody(airplane.getPhysicModel())
     // Create a plane
     const groundShape = new Plane();
     const groundBody = new Body({ mass: 0 });
@@ -206,37 +201,41 @@ function animatePlayer(delta: number) {
   const {acc, heading} = control.getState();
 
   let modFactor = 0;
-  console.log(JSON.stringify(sphereBody.position));
-  
   
   if (acc === 0) {
     // Gradual slowdown if not accelerating
     modFactor = playerVelocity * -0.2;
   } else if (acc > 0) {
     //Breaks are weaker than throttle
-    modFactor = acc * (PLAYERSPEED * 2);
+    modFactor = acc * (PLAYERSPEED * 10);
   } else {
-    modFactor = acc * PLAYERSPEED
+    modFactor = acc * PLAYERSPEED;
   }
 
   playerVelocity = Math.min(MAX_SPEED, Math.max(MIN_SPEED, playerVelocity + modFactor * delta))
 
-  playerHeading.x = heading.x * (PLAYERROTATIONSPEED * delta);
-  playerHeading.y = heading.y * (PLAYERROTATIONSPEED * delta);
-  playerHeading.z = heading.z * (PLAYERROTATIONSPEED * delta);
-  console.log(playerVelocity);
+  deltaPlayerHeading.x = heading.x * (PLAYERROTATIONSPEED * delta);
+  deltaPlayerHeading.y = heading.y * (PLAYERROTATIONSPEED * delta);
+  deltaPlayerHeading.z = heading.z * (PLAYERROTATIONSPEED * delta);
+
+  const vector = engine.camera.getWorldDirection(new Vector3());
+  vector.multiplyScalar(playerVelocity);
   
-  engine.moveControls(new Vector3(
-    0,
-    0,
-    -1 * playerVelocity
+  const phyModel = airplane.getPhysicModel();
+
+  phyModel.force = new Vec3(vector.x, vector.y, vector.z);
+  
+  engine.testMoveControls(new Vector3(
+    phyModel.position.x,
+    phyModel.position.y,
+    phyModel.position.z,
   ), new Vector3(
-    playerHeading.x * delta,
-    playerHeading.y * delta,
-    playerHeading.z * delta
+    deltaPlayerHeading.x * delta,
+    deltaPlayerHeading.y * delta,
+    deltaPlayerHeading.z * delta
   ))
   
   if (airplane.isLoaded()) {
-    engine.updateObject(airplane.getGraphicModel(), engine.getCameraPosition(), engine.getCameraRotation(), airplaneCorrection)
+    engine.updateObject(airplane.getGraphicModel(), engine.getCameraPosition(), engine.getCameraRotation(), airplaneCorrection);
   }
 }
