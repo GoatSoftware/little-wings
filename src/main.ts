@@ -178,16 +178,17 @@ function createPerimWalls() {
 }
 
 function animate() {
-  render();
-  requestAnimationFrame(animate);
-
-  // Get the change in time between frames
-  const delta = engine.getClockDelta();
-  // Update our frames per second monitor
-
-  animatePlayer(delta);
-
-  world.step(delta);
+  engine.renderer.setAnimationLoop(() => {
+    render();
+  
+    // Get the change in time between frames
+    const delta = engine.getClockDelta();
+    // Update our frames per second monitor
+  
+    animatePlayer(delta);
+  
+    world.step(delta);
+  });
 }
 
 // Render the scene

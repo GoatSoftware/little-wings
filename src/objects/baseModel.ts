@@ -11,7 +11,7 @@ export class BaseModel {
   constructor(protected wireframe?: boolean) {}
 
   public load() {
-    const mass = 5, radius = 1.3;
+    const mass = 2, radius = 1.3;
     const sphereShape = new Sphere(radius);
     this.physicModel = new Body({ mass: mass });
     this.physicModel.addShape(sphereShape);

@@ -7,6 +7,7 @@ declare global {
 import { Scene, PerspectiveCamera, WebGLRenderer, Color, Vector3, DirectionalLight, FogExp2, Mesh, Euler, Clock, AmbientLight } from "three";
 import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls";
 import { GLTFLoader, GLTF } from "three/examples/jsm/loaders/GLTFLoader";
+import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 
 export class GraphicEngine {
   scene: Scene;
@@ -39,6 +40,7 @@ export class GraphicEngine {
     }
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.vr.enabled = true;
     container.appendChild(this.renderer.domElement);
 
     this.controls = new PointerLockControls(this.camera, document.body);
@@ -46,6 +48,8 @@ export class GraphicEngine {
     this.addLights();
 
     this.clock = new Clock();
+
+    document.body.appendChild( VRButton.createButton( this.renderer ) );
 
     window.addEventListener('resize', this.onWindowResize, false);
   }
