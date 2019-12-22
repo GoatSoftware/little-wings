@@ -7,15 +7,18 @@ import {
   DoubleSide
 } from 'three';
 import { GraphicEngine } from './graphics/graphicEngine';
-import { Control } from './control';
+import { Keyboard } from './control/keyboard';
 import { World, GSSolver, SplitSolver, NaiveBroadphase, Material, ContactMaterial, Body, Plane, Vec3, Sphere } from 'cannon';
 import { Airplane } from './objects/airplane';
+import { Controller } from './control/controller';
+
+const vr = true;
 
 const UNITWIDTH = 90; // Width of a cubes in the maze
 const UNITHEIGHT = 45; // Height of the cubes in the maze
 const MIN_SPEED = 0;
-const MAX_SPEED = 100;
-const PLAYERSPEED = 10.0; // How fast the player accelerates
+const MAX_SPEED = 25;
+const PLAYERSPEED = 5.0; // How fast the player accelerates
 const PLAYERROTATIONSPEED = 50; // How fast the player rotates
 
 let airplane: Airplane;
@@ -29,17 +32,19 @@ let sphereBody: Body;
 
 const collidableObjects: Mesh[] = [];
 
-let control: Control;
+let control: Keyboard;
 
 // Velocity vectors for the player and dino
 let playerVelocity: number = 0;
-const deltaPlayerHeading = new Vector3();
+let deltaPlayerHeading = new Vector3();
 
 // Set up the game
 init();
 
 function initGraphics() {
-  engine = new GraphicEngine();
+  engine = new GraphicEngine({
+    vr: vr
+  });
 
   GraphicEngine.loadModel('/resources/room_lp_obj_small.glb')
     .then((room: Scene) => {
@@ -47,12 +52,12 @@ function initGraphics() {
       engine.addToScene(room);
     });
 
-  airplane = new Airplane();
+  airplane = new Airplane(vr);
   airplane.load()
     .then(() => {
-      engine.addToScene(airplane.getGraphicModel());
+      engine.addToSceneAsPlayer(airplane.getGraphicModel(), airplane.corrections);
     });
-
+  console.log(airplane);
 
   // engine.loadModel('/resources/airplane2.glb')
   //   .then((plane: Scene) => {
@@ -112,7 +117,8 @@ function createObjects() {
 }
 
 function initInput() {
-  control = new Control();
+  control = new Keyboard();
+  const test = new Controller();
 }
 
 // Set up the game
@@ -218,15 +224,21 @@ function animatePlayer(delta: number) {
   deltaPlayerHeading.x = heading.x * (PLAYERROTATIONSPEED * delta);
   deltaPlayerHeading.y = heading.y * (PLAYERROTATIONSPEED * delta);
   deltaPlayerHeading.z = heading.z * (PLAYERROTATIONSPEED * delta);
+  // deltaPlayerHeading = heading.toGraphic();
+  // deltaPlayerHeading.multiplyScalar(PLAYERROTATIONSPEED * delta);
+
+  // playerVelocity = playerVelocity + 0.2;
+  // deltaPlayerHeading.y = deltaPlayerHeading.y + 0.2;
 
   const vector = engine.camera.getWorldDirection(new Vector3());
   vector.multiplyScalar(playerVelocity);
   
   const phyModel = airplane.getPhysicModel();
+  // console.log(phyModel.velocity);
 
   phyModel.force = new Vec3(vector.x, vector.y, vector.z);
   
-  engine.testMoveControls(new Vector3(
+  engine.moveControls(new Vector3(
     phyModel.position.x,
     phyModel.position.y,
     phyModel.position.z,
@@ -234,9 +246,9 @@ function animatePlayer(delta: number) {
     deltaPlayerHeading.x * delta,
     deltaPlayerHeading.y * delta,
     deltaPlayerHeading.z * delta
-  ))
+  ));
   
-  if (airplane.isLoaded()) {
+  if (airplane.isLoaded() && !vr) {
     engine.updateObject(airplane.getGraphicModel(), engine.getCameraPosition(), engine.getCameraRotation(), airplaneCorrection);
   }
 }

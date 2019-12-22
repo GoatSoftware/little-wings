@@ -1,11 +1,17 @@
 import { BaseModel } from './baseModel';
-import { Group, Scene, Mesh, MeshBasicMaterial } from 'three';
+import { Group, Scene, Mesh, MeshBasicMaterial, Vector3 } from 'three';
 
 export class Airplane extends BaseModel {
-  constructor(wireframe?: boolean) {
+  corrections: Vector3;
+
+  constructor(vr: boolean = false, wireframe?: boolean) {
     super(wireframe);
     
     this.modelPath = '/resources/airplane2_small.glb';
+    this.corrections = new Vector3(0, -0.1, -0.05);
+    if (vr) {
+      this.corrections = new Vector3(0, 1.4, -0.25);
+    }
 
   }
 

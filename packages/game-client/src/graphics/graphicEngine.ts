@@ -4,7 +4,7 @@ declare global {
   }
 }
 
-import { Scene, PerspectiveCamera, WebGLRenderer, Color, Vector3, DirectionalLight, FogExp2, Mesh, Euler, Clock, AmbientLight } from "three";
+import { Scene, PerspectiveCamera, WebGLRenderer, Color, Vector3, DirectionalLight, FogExp2, Mesh, Euler, Clock, AmbientLight, Group } from "three";
 import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls";
 import { GLTFLoader, GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
@@ -12,12 +12,15 @@ import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 export class GraphicEngine {
   scene: Scene;
   camera: PerspectiveCamera;
+  player: Group;
   renderer: WebGLRenderer;
   controls: PointerLockControls;
   gltfLoader: GLTFLoader;
   clock: Clock;
 
-  constructor(options: {fog: boolean} = {fog: false}, debug: boolean = false) {
+  constructor(options: {fog?: boolean, vr?: boolean} = {fog: false, vr: false}, debug: boolean = false) {
+    const CAMERA_NEAR = 0.001;
+    const CAMERA_FAR = 200000;
     const container = document.getElementById('container');
 
     this.scene = new Scene();
@@ -29,10 +32,10 @@ export class GraphicEngine {
     this.camera = new PerspectiveCamera(
       60,
       window.innerWidth / window.innerHeight,
-      0.01,
-      200000
+      CAMERA_NEAR,
+      CAMERA_FAR
     );
-    this.camera.position.set(0, 50, 0);
+    // this.camera.position.set(0, 50, 0);
 
     this.renderer = new WebGLRenderer();
     if (options.fog) {
@@ -40,16 +43,23 @@ export class GraphicEngine {
     }
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.vr.enabled = true;
+    
+    this.player = new Group();
+    this.scene.add(this.player);
+    this.player.add(this.camera);
+    
     container.appendChild(this.renderer.domElement);
-
+    
     this.controls = new PointerLockControls(this.camera, document.body);
-
+    
     this.addLights();
-
+    
     this.clock = new Clock();
-
-    document.body.appendChild( VRButton.createButton( this.renderer ) );
+    
+    if (options.vr) {
+      this.renderer.vr.enabled = true;
+      document.body.appendChild( VRButton.createButton( this.renderer ) );
+    }
 
     window.addEventListener('resize', this.onWindowResize, false);
   }
@@ -98,6 +108,15 @@ export class GraphicEngine {
     this.scene.add(subScene);
   }
 
+  public addToSceneAsPlayer(playerScene: Scene | Mesh, correction?: Vector3) {
+    this.player.add(playerScene);
+    if(correction) {
+      playerScene.translateX(correction.x);
+      playerScene.translateY(correction.y);
+      playerScene.translateZ(correction.z);
+    }
+  }
+
   public updateObject(object: Scene, position: Vector3, rotation: Euler, correction?: Vector3) {
     object.position.set(
       position.x,
@@ -116,18 +135,8 @@ export class GraphicEngine {
     }
   }
 
-  public moveControls(deltaPosition: Vector3, deltaRotation: Vector3) {
-    this.controls.getObject().translateX(deltaPosition.x);
-    this.controls.getObject().translateZ(deltaPosition.z);
-    this.controls.getObject().translateY(deltaPosition.y);
-    this.controls.getObject().rotateX(deltaRotation.x);
-    this.controls.getObject().rotateY(deltaRotation.y);
-    this.controls.getObject().rotateZ(deltaRotation.z);
-  }
-
-  public testMoveControls(pos: Vector3, deltaRotation: Vector3) {
-    this.camera.position.set(pos.x, pos.y, pos.z);
-    // this.controls.update();
+  public moveControls(pos: Vector3, deltaRotation: Vector3) {
+    this.player.position.set(pos.x, pos.y, pos.z);
     this.controls.getObject().rotateX(deltaRotation.x);
     this.controls.getObject().rotateY(deltaRotation.y);
     this.controls.getObject().rotateZ(deltaRotation.z);

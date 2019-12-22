@@ -16,7 +16,7 @@ export class BaseModel {
     this.physicModel = new Body({ mass: mass });
     this.physicModel.addShape(sphereShape);
     this.physicModel.position.set(0,20,0);
-    this.physicModel.linearDamping = 0.9;
+    this.physicModel.linearDamping = 0.5;
 
     return new Promise((resolve, reject) => {
       GraphicEngine.loadModel(this.modelPath)

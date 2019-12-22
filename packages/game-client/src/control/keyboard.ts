@@ -1,6 +1,6 @@
-import { Vector } from './types/vector';
+import { Vector } from '../types/vector';
 // Add event listeners for player movement key presses
-export class Control {
+export class Keyboard {
   acc: number = 0;
   vectorHead: Vector = new Vector(0, 0, 0);
 
