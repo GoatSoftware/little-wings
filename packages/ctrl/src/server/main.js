@@ -1,12 +1,6 @@
-const io = require('socket.io')({
-  transports: ['websocket']
-});
-
 let listener;
 
-io.on('connection', onConection);
-
-function onConection(client) {
+function handleConection(client) {
   console.info('Client conected');
   client.on('registerAsController', () => onRegisterController(client));
   client.on('registerAsListener', () => onRegisterListener(client));
@@ -30,4 +24,4 @@ function onOrientationChange(orientation) {
   }
 }
 
-io.listen(9995);
+module.exports = handleConection;
