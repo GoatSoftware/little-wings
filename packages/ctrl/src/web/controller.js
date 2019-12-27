@@ -1,4 +1,4 @@
-var socket = io("https://little-wings.herokuapp.com:9995");
+var socket = io("https://goatsoft.ddns.net:9001/");
 socket.emit('registerAsController');
 const REFRESH_RATE = 144;
 

@@ -12,7 +12,7 @@ export class Controller {
   vectorHead: Vector = new Vector(0, 0, 0); // -1 to 1 on every coordinate
   
   constructor() {
-    var socket = connect("https://little-wings.herokuapp.com:9995");
+    var socket = connect("https://goatsoft.ddns.net:9001/");
     socket.emit('registerAsListener');
     socket.on('orientation', (o: ControllerOrientation) => {
       this.parseOrientation(o);
