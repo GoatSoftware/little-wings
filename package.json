@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "lerna bootstrap",
-    "build": "lerna run build --scope=@little-wings/game-client --scope=@little-wings/ctrl-controller --stream",
+    "build": "lerna run build --scope=@little-wings/game-client --stream",
     "start": "node index.js",
     "start:ctrl": "lerna run start --scope=@little-wings/ctrl --stream",
     "start:game": "lerna run start --scope=@little-wings/game-client --stream",
