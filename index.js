@@ -12,7 +12,7 @@ if (apps[process.env.APP]) {
 }
 
 function startApp(app) {
-  var child = spawn('npm.cmd', ['run', `start:${app}`]);
+  var child = spawn('npm', ['run', `start:${app}`], { shell: true });
 
   child.stdout.on('data', function (data) {
     process.stdout.write(data);
