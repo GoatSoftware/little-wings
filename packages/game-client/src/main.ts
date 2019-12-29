@@ -41,6 +41,9 @@ let deltaPlayerHeading = new Vector3();
 // Set up the game
 init();
 
+/**
+ * Starts the graphic engine
+ */
 function initGraphics() {
   engine = new GraphicEngine({
     vr: vr
@@ -66,10 +69,16 @@ function initGraphics() {
   //   });
 }
 
+/**
+ * Enables the debug in every engine
+ */
 function initDebugger() {
   engine.initDebugger();
 }
 
+/**
+ * Starts and configure the physic engine
+ */
 function initPhysics() {
     // Setup our world
     world = new World();
@@ -109,6 +118,10 @@ function initPhysics() {
     world.addBody(groundBody);
 }
 
+/**
+ * Creates the basic scene
+ * TODO This function must be refactorized. The scene must be loaded somewhere else.
+ */
 function createObjects() {
   // Add ground plane
   createGround();
@@ -116,6 +129,12 @@ function createObjects() {
   createPerimWalls();
 }
 
+/**
+ * Enables the controls.
+ * By now, tow controls are being created, Keyboard for the PC and Controller for the mobile.
+ * TODO This must be refactorized. The input must be requested to the user in PC.
+ * In android, Controller should be selected automatically
+ */
 function initInput() {
   control = new Keyboard();
   const test = new Controller();
@@ -136,7 +155,11 @@ function init() {
   animate();
 }
 
-// Create the ground plane that the maze sits on top of
+/**
+ * Create the ground plane that the maze sits on top of
+ * TODO This is deprecated, should be removed, but the current house is very small and
+ * is usual to go out of bounds. The deprecated ground helps to find the house again.
+ */
 function createGround() {
   // Create the ground geometry and material
   const groundGeo = new PlaneGeometry(mapSize, mapSize);
@@ -152,7 +175,10 @@ function createGround() {
   engine.addToScene(ground);
 }
 
-// Make the four perimeter walls for the maze
+/**
+ * Make the four perimeter walls for the maze
+ * TODO This is deprecated, should be removed. Same as createGround.
+ */
 function createPerimWalls() {
   const halfMap = mapSize / 2; // Half the size of the map
   let sign = 1; // Used to make an amount positive or negative
@@ -183,6 +209,9 @@ function createPerimWalls() {
   }
 }
 
+/**
+ * Inits the game loop
+ */
 function animate() {
   engine.renderer.setAnimationLoop(() => {
     render();
@@ -197,12 +226,17 @@ function animate() {
   });
 }
 
-// Render the scene
+/**
+ * Render the scene. Wraps the engine method.
+ */
 function render() {
   engine.render();
 }
 
-// Animate the player camera
+/**
+ * Animate the player camera. This is where update calculations are made.
+ * TODO This should be refactorized. This code must be somewhere else.
+ */
 function animatePlayer(delta: number) {
   
   const {acc, heading} = control.getState();
