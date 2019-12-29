@@ -14,7 +14,7 @@
   },
   "author": "GoatSoft",
   "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
     "lerna": "^3.19.0"
   },
   "engines": {
