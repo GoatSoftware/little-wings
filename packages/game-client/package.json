@@ -18,16 +18,15 @@
     "cannon": "^0.6.2",
     "express": "^4.17.1",
     "socket.io-client": "^2.3.0",
-    "three": "^0.111.0"
+    "three": "^0.111.0",
+    "typescript": "^3.7.3",
+    "parcel-bundler": "^1.12.4",
+    "rimraf": "^3.0.0"
   },
   "devDependencies": {
     "@types/cannon": "^0.1.4",
     "@types/socket.io": "^2.1.4",
     "@types/socket.io-client": "^1.4.32",
-    "@types/three": "^0.103.2",
-    "lerna": "^3.19.0",
-    "parcel-bundler": "^1.12.4",
-    "rimraf": "^3.0.0",
-    "typescript": "^3.7.3"
+    "@types/three": "^0.103.2"
   }
 }

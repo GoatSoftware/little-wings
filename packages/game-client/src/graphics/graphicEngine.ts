@@ -9,6 +9,9 @@ import { PointerLockControls } from "three/examples/jsm/controls/PointerLockCont
 import { GLTFLoader, GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 
+/**
+ * Wrapper of three library
+ */
 export class GraphicEngine {
   scene: Scene;
   camera: PerspectiveCamera;
@@ -18,6 +21,13 @@ export class GraphicEngine {
   gltfLoader: GLTFLoader;
   clock: Clock;
 
+
+  /**
+   * Creates an instance of GraphicEngine and sets the starting values.
+   * 
+   * @param {{fog?: boolean, vr?: boolean}} [options={fog: false, vr: false}]
+   * @param {boolean} [debug=false]
+   */
   constructor(options: {fog?: boolean, vr?: boolean} = {fog: false, vr: false}, debug: boolean = false) {
     const CAMERA_NEAR = 0.001;
     const CAMERA_FAR = 200000;
@@ -64,6 +74,10 @@ export class GraphicEngine {
     window.addEventListener('resize', this.onWindowResize, false);
   }
 
+  /**
+   * Handles the window resize.
+   * TODO Review this code. Is making some glitches and is heritage of original PoC
+   */
   private onWindowResize() {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
@@ -71,6 +85,9 @@ export class GraphicEngine {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
   
+  /**
+   * Creates the static lights
+   */
   private addLights() {
     this.addDirectionalLight(new Vector3(1, 1, 1), 0xffffff);
     this.addDirectionalLight(new Vector3(1, -1, -1), 0xffffff, 0.4);
@@ -79,6 +96,13 @@ export class GraphicEngine {
     this.scene.add(ambientLight);
   }
 
+  /**
+   * Helper to create directional light.
+   * 
+   * @param {Vector3} position
+   * @param {number} color
+   * @param {number} [intensity]
+   */
   private addDirectionalLight(position: Vector3, color: number, intensity?: number) {
     const light = new DirectionalLight(color, intensity);
     light.position.set(position.x, position.y, position.z);
@@ -88,6 +112,13 @@ export class GraphicEngine {
   public async loadModels() {
   }
 
+  /**
+   * Given the model path returns the promise of the three scene
+   *
+   * @static
+   * @param {string} path
+   * @returns {Promise<any>}
+   */
   public static loadModel(path: string): Promise<any> {
     const gltfLoader = new GLTFLoader();
     return new Promise((resolve, reject) => {
@@ -104,10 +135,22 @@ export class GraphicEngine {
     });
   }
 
+  
+  /**
+   * Adds an object to the scene
+   *
+   * @param {(Scene | Mesh)} subScene
+   */
   public addToScene(subScene: Scene | Mesh) {
     this.scene.add(subScene);
   }
 
+  /**
+   * Adds an object to the player group and applies an optional correction
+   *
+   * @param {(Scene | Mesh)} playerScene
+   * @param {Vector3} [correction]
+   */
   public addToSceneAsPlayer(playerScene: Scene | Mesh, correction?: Vector3) {
     this.player.add(playerScene);
     if(correction) {
@@ -117,6 +160,14 @@ export class GraphicEngine {
     }
   }
 
+  /**
+   * Updates an object from the scene and applies its correction.
+   *
+   * @param {Scene} object
+   * @param {Vector3} position
+   * @param {Euler} rotation
+   * @param {Vector3} [correction]
+   */
   public updateObject(object: Scene, position: Vector3, rotation: Euler, correction?: Vector3) {
     object.position.set(
       position.x,

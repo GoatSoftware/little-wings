@@ -5,13 +5,20 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "lerna bootstrap",
-    "build": "lerna run build --scope=@little-wings/game-client --scope=@little-wings/ctrl-controller --stream",
-    "start": "lerna run start --scope=@little-wings/game-client --scope=@little-wings/ctrl-controller --scope=@little-wings/ctrl-server --stream",
+    "build": "lerna run build --scope=@little-wings/game-client --stream",
+    "start": "node index.js",
+    "start:ctrl": "lerna run start --scope=@little-wings/ctrl --stream",
+    "start:game": "lerna run start --scope=@little-wings/game-client --stream",
+    "start:server": "echo 'No tests'",
     "dev": "lerna run dev --scope=@little-wings/game-client --stream"
   },
   "author": "GoatSoft",
   "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
     "lerna": "^3.19.0"
+  },
+  "engines": {
+    "node": "10.12.0",
+    "npm": "6.4.1"
   }
 }
