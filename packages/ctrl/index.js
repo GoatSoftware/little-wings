@@ -1,21 +1,17 @@
-var express = require('express');
-var fs = require('fs');
-var cors = require('cors');
-var https = require('https');
-var app = express();
-var handleConection = require('./src/server/main');
+const express = require('express');
+const cors = require('cors');
+const http = require('http');
+const app = express();
+const handleConection = require('./src/server/main');
 
 app.use(cors());
 
 app.use(express.static(__dirname + '/src/web/'));
 
-const server = https.createServer({
-  key: fs.readFileSync('certs/server.key'),
-  cert: fs.readFileSync('certs/server.cert')
-}, app)
-.listen(process.env.PORT || 9001, function () {
-  console.log('Listening on port ' + (process.env.PORT || 9001) + ' https://localhost:' + (process.env.PORT || 9001) + '/')
-})
+const server = http.createServer(app)
+  .listen(process.env.PORT || 9001, function () {
+    console.log('Listening on port ' + (process.env.PORT || 9001) + ' https://localhost:' + (process.env.PORT || 9001) + '/');
+  });
 
 const io = require('socket.io').listen(server);
 
