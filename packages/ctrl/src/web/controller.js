@@ -1,4 +1,4 @@
-var socket = io("https://goatsoft.ddns.net:9001/");
+var socket = io("https://192.168.1.40:9001/");
 socket.emit('registerAsController');
 const REFRESH_RATE = 144;
 

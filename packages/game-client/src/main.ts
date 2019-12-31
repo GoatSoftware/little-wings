@@ -32,7 +32,7 @@ let sphereBody: Body;
 
 const collidableObjects: Mesh[] = [];
 
-let control: Keyboard;
+let control: Controller;
 
 // Velocity vectors for the player and dino
 let playerVelocity: number = 0;
@@ -136,8 +136,8 @@ function createObjects() {
  * In android, Controller should be selected automatically
  */
 function initInput() {
-  control = new Keyboard();
-  const test = new Controller();
+  // control = new Keyboard();
+  control = new Controller();
 }
 
 // Set up the game

@@ -10,7 +10,7 @@
     "start:ctrl": "lerna run start --scope=@little-wings/ctrl --stream",
     "start:game": "lerna run start --scope=@little-wings/game-client --stream",
     "start:server": "echo 'No tests'",
-    "dev": "lerna run dev --scope=@little-wings/game-client --stream"
+    "dev": "lerna run dev --stream"
   },
   "author": "GoatSoft",
   "license": "ISC",
