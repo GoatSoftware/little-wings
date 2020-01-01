@@ -1,6 +1,8 @@
 import { Vector } from '../types/vector';
+import { Control, ControlState } from './control';
+
 // Add event listeners for player movement key presses
-export class Keyboard {
+export class Keyboard implements Control {
   acc: number = 0;
   vectorHead: Vector = new Vector(0, 0, 0);
 
@@ -100,7 +102,7 @@ export class Keyboard {
     }
   };
 
-  public getState() {
+  public getState(): ControlState {
     return {acc: this.acc, heading: this.vectorHead};
   }
 }

@@ -1,5 +1,6 @@
 import { Vector } from '../types/vector';
 import { connect } from 'socket.io-client';
+import { ControlState, Control } from './control';
 
 interface ControllerOrientation {
   orientation: {
@@ -8,19 +9,19 @@ interface ControllerOrientation {
   }
 }
 
-export class Controller {
+export class Controller implements Control {
   acc: number = 1; // -1 to 1
   vectorHead: Vector = new Vector(0, 0, 0); // -1 to 1 on every coordinate
   
   constructor() {
-    var socket = connect(process.env.SOCKET_ADDRESS || "https://localhost:9001/");
+    var socket = connect(process.env.SOCKET_ADDRESS || "https://192.168.1.14:9001/");
     socket.emit('registerAsListener');
     socket.on('orientation', (o: ControllerOrientation) => {
       this.parseOrientation(o);
     });
   }
 
-  private parseOrientation(state: ControllerOrientation) {
+  private parseOrientation(state: ControllerOrientation): void {
     if (state.orientation.global.g < 0) {
       this.vectorHead.x = (state.orientation.global.g / -90 - 0.5) * 2;
     }
@@ -33,7 +34,7 @@ export class Controller {
     // }
   }
 
-  public getState() {
+  public getState(): ControlState {
     return {acc: this.acc, heading: this.vectorHead};
   }
 }

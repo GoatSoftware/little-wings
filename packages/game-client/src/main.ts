@@ -11,14 +11,15 @@ import { Keyboard } from './control/keyboard';
 import { World, GSSolver, SplitSolver, NaiveBroadphase, Material, ContactMaterial, Body, Plane, Vec3, Sphere } from 'cannon';
 import { Airplane } from './objects/airplane';
 import { Controller } from './control/controller';
+import { Control } from './control/control';
 
 const vr = true;
 
 const UNITWIDTH = 90; // Width of a cubes in the maze
 const UNITHEIGHT = 45; // Height of the cubes in the maze
 const MIN_SPEED = 0;
-const MAX_SPEED = 25;
-const PLAYERSPEED = 5.0; // How fast the player accelerates
+const MAX_SPEED = 40;
+const PLAYERSPEED = 10.0; // How fast the player accelerates
 const PLAYERROTATIONSPEED = 50; // How fast the player rotates
 
 let airplane: Airplane;
@@ -32,7 +33,7 @@ let sphereBody: Body;
 
 const collidableObjects: Mesh[] = [];
 
-let control: Controller;
+let control: Control;
 
 // Velocity vectors for the player and dino
 let playerVelocity: number = 0;
@@ -49,6 +50,7 @@ function initGraphics() {
     vr: vr
   });
 
+  // TODO Create a class for environment
   GraphicEngine.loadModel('/resources/room_lp_obj_small.glb')
     .then((room: Scene) => {
       room.scale.multiplyScalar(15)
@@ -56,6 +58,9 @@ function initGraphics() {
     });
 
   airplane = new Airplane(vr);
+
+  // TODO As long as many models could be inserted, the models should be in an array
+  // and the load must be over the full array
   airplane.load()
     .then(() => {
       engine.addToSceneAsPlayer(airplane.getGraphicModel(), airplane.corrections);
@@ -78,6 +83,7 @@ function initDebugger() {
 
 /**
  * Starts and configure the physic engine
+ * TODO Move to a cannon wrapper
  */
 function initPhysics() {
     // Setup our world
@@ -243,6 +249,7 @@ function animatePlayer(delta: number) {
 
   let modFactor = 0;
   
+  // TODO Player does not lose speed on accelerating (important for axis different from the current direction)
   if (acc === 0) {
     // Gradual slowdown if not accelerating
     modFactor = playerVelocity * -0.2;
@@ -264,12 +271,12 @@ function animatePlayer(delta: number) {
   // playerVelocity = playerVelocity + 0.2;
   // deltaPlayerHeading.y = deltaPlayerHeading.y + 0.2;
 
+  // TODO Camera direction should not be basis for movement (in vr, camera moves independent of the player)
   const vector = engine.camera.getWorldDirection(new Vector3());
   vector.multiplyScalar(playerVelocity);
   
+  // TODO Force application should part of the airplane
   const phyModel = airplane.getPhysicModel();
-  // console.log(phyModel.velocity);
-
   phyModel.force = new Vec3(vector.x, vector.y, vector.z);
   
   engine.moveControls(new Vector3(
