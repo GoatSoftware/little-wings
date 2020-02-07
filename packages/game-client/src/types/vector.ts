@@ -6,17 +6,33 @@ export class Vector {
   y: number;
   z: number;
 
-	constructor(x?: number, y?: number, z?: number) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
+  constructor();
+  constructor(x: number, y: number, z: number);
+  constructor(graphicVector: Vector3);
+  constructor(physicVector: Vec3);
+	constructor(x: number | Vector3 | Vec3 = 0, y: number = 0, z: number = 0) {
+    if (x instanceof Vector3 || x instanceof Vec3) {
+      this.x = x.x;
+      this.y = x.y;
+      this.z = x.z;
+    } else if (x && y && z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
   }
 
   toGraphic(): Vector3 {
     return new Vector3(this.x, this.y, this.z);
   }
 
-  tpPhysic(): Vec3 {
+  toPhysic(): Vec3 {
     return new Vec3(this.x, this.y, this.z);
+  }
+
+  multiplyScalar(scalar: number) {
+    this.x = this.x * scalar;
+    this.y = this.y * scalar;
+    this.z = this.z * scalar;
   }
 }
