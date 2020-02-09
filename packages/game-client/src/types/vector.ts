@@ -15,7 +15,7 @@ export class Vector {
       this.x = x.x;
       this.y = x.y;
       this.z = x.z;
-    } else if (x && y && z) {
+    } else if ((x || x === 0) && (y || y === 0) && (z || z === 0)) {
       this.x = x;
       this.y = y;
       this.z = z;
